@@ -6,17 +6,19 @@
   become: true
   vars_files:
     - vars/default.yml
+  vars:
+    ansible_ssh_private_key_file: "/home/fajar/project/ansible_ubuntu_1804/ansible-playbooks/lemp_ubuntu1804/hostingrizal.pem"
 
   tasks:
     - name: Install Prerequisites
       apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
-      loop: [ 'aptitude' ]
+      loop: ["aptitude"]
 
     - name: Install LEMP Packages
       apt: name={{ item }} update_cache=yes state=latest
-      loop: [ 'nginx', 'mysql-server', 'python3-pymysql', 'php-fpm', 'php-mysql' ]
-    
-# Nginx Configuration
+      loop: ["nginx", "mysql-server", "python3-pymysql", "php-fpm", "php-mysql"]
+
+    # Nginx Configuration
     - name: Sets Nginx conf file
       template:
         src: "files/nginx.conf.j2"
@@ -28,43 +30,43 @@
         dest: "/etc/nginx/sites-enabled/{{ http_conf }}"
         state: link
       notify: Reload Nginx
-    
+
     - name: Removes "default" site
       file:
         path: "/etc/nginx/sites-enabled/default"
         state: absent
       notify: Reload Nginx
 
-# MySQL Configuration
-    - name: Sets the root password 
-      mysql_user: 
-        name: root 
+    # MySQL Configuration
+    - name: Sets the root password
+      mysql_user:
+        name: root
         password: "{{ mysql_root_password }}"
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
     - name: Removes all anonymous user accounts
       mysql_user:
-        name: ''
+        name: ""
         host_all: yes
         state: absent
         login_user: root
         login_password: "{{ mysql_root_password }}"
 
     - name: Removes the MySQL test database
-      mysql_db: 
-        name: test 
+      mysql_db:
+        name: test
         state: absent
         login_user: root
         login_password: "{{ mysql_root_password }}"
 
-# UFW Configuration
-    - name: "UFW - Allow HTTP on port {{ http_port }}"
-      ufw:
-        rule: allow
-        port: "{{ http_port }}"
-        proto: tcp
+    # UFW Configuration
+    # - name: "UFW - Allow HTTP on port {{ http_port }}"
+    #   ufw:
+    #     rule: allow
+    #     port: "{{ http_port }}"
+    #     proto: tcp
 
-# Sets Up PHP Info Page
+    # Sets Up PHP Info Page
     - name: Sets Up PHP Info Page
       template:
         src: "files/info.php.j2"
